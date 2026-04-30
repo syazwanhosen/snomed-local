@@ -1,0 +1,65 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-8.11.1}
+    container_name: snowstorm-elasticsearch
+    restart: unless-stopped
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms${ES_HEAP:-2g} -Xmx${ES_HEAP:-2g}"
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+    networks:
+      - snowstormnet
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    ports:
+      - "127.0.0.1:9200:9200"
+
+  snowstorm:
+    image: snomedinternational/snowstorm:${SNOWSTORM_VERSION:-latest}
+    container_name: snowstorm
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    entrypoint: >
+      java
+      -Xms${SNOWSTORM_HEAP_MIN:-2g}
+      -Xmx${SNOWSTORM_HEAP_MAX:-4g}
+      --add-opens java.base/java.lang=ALL-UNNAMED
+      --add-opens java.base/java.util=ALL-UNNAMED
+      -cp @/app/jib-classpath-file org.snomed.snowstorm.SnowstormApplication
+      --elasticsearch.urls=http://elasticsearch:9200
+      --spring.config.additional-location=file:/config/application-local.properties
+    volumes:
+      - ./config/application-local.properties:/config/application-local.properties:ro
+      - ./snomed-data:/snomed-data:ro
+    networks:
+      - snowstormnet
+    ports:
+      - "8080:8080"
+
+  browser:
+    image: snomedinternational/snomedct-browser:${BROWSER_VERSION:-latest}
+    container_name: snowstorm-browser
+    restart: unless-stopped
+    depends_on:
+      - snowstorm
+    environment:
+      - API_HOST=http://snowstorm:8080/
+    networks:
+      - snowstormnet
+    ports:
+      - "80:80"
+
+networks:
+  snowstormnet:
+    driver: bridge
+
+volumes:
+  elastic-data:

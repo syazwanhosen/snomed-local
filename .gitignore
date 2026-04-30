@@ -1,0 +1,8 @@
+.env
+.DS_Store
+
+# SNOMED CT release files - licensed content, never commit
+snomed-data/*.zip
+snomed-data/*.ZIP
+snomed-data/SnomedCT*
+snomed-data/xSnomedCT*
