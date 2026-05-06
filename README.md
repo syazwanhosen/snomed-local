@@ -34,7 +34,7 @@ You should see all three services reporting OK. The browser UI at http://localho
 
 ## Loading SNOMED CT data
 
-1. Obtain an RF2 release zip (see [snomed-data/README.md](snomed-data/README.md))
+1. Download the rf2 file on https://drive.google.com/file/d/1jLZxmJvl7TLR4qCc6Ns50eBgZrYrI0om/view?usp=sharing
 2. Place it in `snomed-data/`
 3. Run the import:
 
